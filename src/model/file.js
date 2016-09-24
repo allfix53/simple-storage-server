@@ -1,15 +1,9 @@
 import mongoose from 'mongoose';
 
 let fileSchema = {
-  name: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  url: {
-    type: String,
-    required: true,
-    unique: true
+  files: {
+    type: Array,
+    required: true
   },
   created_at: {
     type: Date,
@@ -21,4 +15,4 @@ let fileSchema = {
   }
 }
 
-export default mongoose.model('File', fileSchema);
+export default mongoose.model('xFile', fileSchema);
