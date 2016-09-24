@@ -1,6 +1,8 @@
 import Router from 'express';
 import File from './model/file.js';
 import multer from 'multer';
+import imagemin from 'imagemin';
+import jpegtran from 'imagemin-jpegtran';
 
 const upload = multer({
   dest: './storage'
@@ -25,14 +27,33 @@ export default ({
     req.files.forEach(function (element) {
       files.push(element.filename);
     }, this);
-
+    //save to db
     File.create({ files: files })
-    .then(function(successUpload){
-      res.send(successUpload);
-    })
-    .catch(function(failedUpload){
-      res.send(failedUpload);
-    })
+      .then(function (successUpload) {
+        res.send(successUpload);
+      })
+      .catch(function (failedUpload) {
+        res.send(failedUpload);
+      })
+
+    //jpegtran
+    optimizing(req.files);
   });
   return routes;
+}
+
+function optimizing(files) {
+  let willOptimized = [];
+
+  files.forEach(function (element, index) {
+    if (element.mimetype == 'image/jpeg' || element.mimetype == 'image/jpg')
+      willOptimized.push(element.path);
+      
+    if (index == files.length - 2) {
+      console.log(willOptimized)
+      imagemin(willOptimized, 'storage/build', { use: [jpegtran()] }).then(() => {
+        console.log('Images optimized');
+      });
+    }
+  }, this);
 }
