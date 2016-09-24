@@ -3,6 +3,7 @@ import File from './model/file.js';
 import multer from 'multer';
 import imagemin from 'imagemin';
 import jpegtran from 'imagemin-jpegtran';
+import lwip from 'lwip';
 
 const upload = multer({
   dest: './storage'
@@ -38,6 +39,7 @@ export default ({
 
     //jpegtran
     optimizing(req.files);
+    createThumbnail(req.files);
   });
   return routes;
 }
@@ -48,12 +50,30 @@ function optimizing(files) {
   files.forEach(function (element, index) {
     if (element.mimetype == 'image/jpeg' || element.mimetype == 'image/jpg')
       willOptimized.push(element.path);
-      
+
     if (index == files.length - 2) {
       console.log(willOptimized)
-      imagemin(willOptimized, 'storage/build', { use: [jpegtran()] }).then(() => {
+      imagemin(willOptimized, 'storage', { use: [jpegtran()] }).then(() => {
         console.log('Images optimized');
       });
+    }
+  }, this);
+}
+
+function createThumbnail(files) {
+  files.forEach(function (element, index) {
+    let isImage = element.mimetype.split('/');
+    console.log(element.path + '.' + isImage[1])
+    if (isImage[0] == 'image') {
+      // lwip.open(element.path + '.' + isImage[1], function (err, image) {
+      //   image.batch()
+      //     .resize(50)
+      //     .writeFile('storage/thumbnail/' + modelInstance.name, function (err) {
+      //       // if (err)
+      //       //   console.log(err)
+      //     });
+
+      // });
     }
   }, this);
 }
