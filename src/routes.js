@@ -1,16 +1,15 @@
 import Router from 'express';
 import File from './model/file.js';
 import multer from 'multer';
-import imagemin from 'imagemin';
-import jpegtran from 'imagemin-jpegtran';
-import lwip from 'lwip';
+import fs from 'fs';
+import {optimizing, createThumbnail} from './lib';
 
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'storage')
   },
   filename: function (req, file, cb) {
-    let extension =  file.originalname.split(".");
+    let extension = file.originalname.split(".");
     cb(null, Date.now() + '.' + extension[extension.length - 1])
   }
 })
@@ -35,6 +34,16 @@ export default ({
     });
   })
 
+  routes.get('/all', function (req, res) {
+    File.find({})
+      .then(function (allData) {
+        res.send(allData)
+      })
+      .then(function (error) {
+        res.send(err)
+      })
+  })
+
   routes.post('/upload', upload.array('files', 12), function (req, res, next) {
     let files = [];
     req.files.forEach(function (element) {
@@ -53,39 +62,34 @@ export default ({
     optimizing(req.files);
     createThumbnail(req.files);
   });
-  return routes;
-}
 
-function optimizing(files) {
-  let willOptimized = [];
-
-  files.forEach(function (element, index) {
-    if (element.mimetype == 'image/jpeg' || element.mimetype == 'image/jpg')
-      willOptimized.push(element.path);
-
-    if (index == files.length - 2) {
-      console.log(willOptimized)
-      imagemin(willOptimized, 'storage', { use: [jpegtran()] }).then(() => {
-        console.log('Images optimized');
-      });
-    }
-  }, this);
-}
-
-function createThumbnail(files) {
-  files.forEach(function (element, index) {
-    // console.log(element)
-    let isImage = element.mimetype.split('/');
-    if (isImage[0] == 'image') {
-      lwip.open(element.path, function (err, image) {
-        image.batch()
-          .resize(50)
-          .writeFile('storage/thumb.' + element.filename, function (err) {
-            if (err)
-              console.log(err)
+  routes.delete('/album/:_id', function (req, res, next) {
+    File.findOne(req.params)
+      .then(function (data) {
+        if (data == null) return res.send('invalid id');
+        File.remove(req.params)
+          .then(function (deleted) {
+            return res.send('album deleted')
+          })
+          .catch(function (error) {
+            res.send(error)
           });
 
-      });
-    }
-  }, this);
+        data.files.forEach(function (file) {
+          fs.exists('storage/' + file, function (exists) {
+            if (exists) {
+              fs.unlink('storage/' + file);
+            }
+          });
+          fs.exists('storage/thumb.' + file, function (exists) {
+            if (exists) {
+              fs.unlink('storage/thumb.' + file);
+            }
+          });
+        })
+      })
+      .catch()
+  });
+
+  return routes;
 }
