@@ -5,9 +5,21 @@ import imagemin from 'imagemin';
 import jpegtran from 'imagemin-jpegtran';
 import lwip from 'lwip';
 
-const upload = multer({
-  dest: './storage'
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'storage')
+  },
+  filename: function (req, file, cb) {
+    let extension =  file.originalname.split(".");
+    cb(null, Date.now() + '.' + extension[extension.length - 1])
+  }
 })
+
+var upload = multer({ storage: storage })
+
+//upload: upload album
+//update: {file & deleteItem}
+//delete: delete album
 
 export default ({
   config,
@@ -62,18 +74,18 @@ function optimizing(files) {
 
 function createThumbnail(files) {
   files.forEach(function (element, index) {
+    // console.log(element)
     let isImage = element.mimetype.split('/');
-    console.log(element.path + '.' + isImage[1])
     if (isImage[0] == 'image') {
-      // lwip.open(element.path + '.' + isImage[1], function (err, image) {
-      //   image.batch()
-      //     .resize(50)
-      //     .writeFile('storage/thumbnail/' + modelInstance.name, function (err) {
-      //       // if (err)
-      //       //   console.log(err)
-      //     });
+      lwip.open(element.path, function (err, image) {
+        image.batch()
+          .resize(50)
+          .writeFile('storage/thumb.' + element.filename, function (err) {
+            if (err)
+              console.log(err)
+          });
 
-      // });
+      });
     }
   }, this);
 }
