@@ -28,15 +28,66 @@ export default ({
 
   // add middleware here
   routes.get('/', function (req, res) {
-    res.render('index', {
-      title: 'Hey',
-      message: 'Hello there!'
-    });
+    return res.send('SERVER UP');
   })
 
   routes.get('/all', function (req, res) {
     File.find({})
       .then(function (allData) {
+        res.send(allData)
+      })
+      .then(function (error) {
+        res.send(err)
+      })
+  })
+
+  routes.put('/update/:_id', function (req, res) {
+    File.find(req.params)
+      .then(function (allData) {
+        if (allData == null) return res.send('invalid id');
+        let files = allData.files;
+        console.log(allData)
+        console.log(files);
+        //delete file
+
+        if (typeof req.body.delete == 'object' && res.body.delete.length > 0) {
+          req.body.delete.forEach(function (file) {
+            fs.exists('storage/' + file, function (exists) {//remove file
+              if (exists) {
+                fs.unlink('storage/' + file);
+              }
+            });
+            fs.exists('storage/thumb.' + file, function (exists) {//remove thmbnail if exist
+              if (exists) {
+                fs.unlink('storage/thumb.' + file);
+              }
+            });
+
+            //remove from array
+            let i = array.indexOf(file);
+            if (i != -1) {
+              files.splice(i, 1);
+            }
+          })
+        }
+
+        //addfile
+        req.files.forEach(function (element) {
+          files.push(element.filename);
+        }, this);
+        console.log(files)
+        //save
+        File.update({ _id: req.params._id, files: files })
+          .then(function (success) {
+            return res.send(success);
+          })
+          .catch(function (err) {
+            return res.send(err);
+          })
+
+        optimizing(req.files);
+        createThumbnail(req.files);
+
         res.send(allData)
       })
       .then(function (error) {
