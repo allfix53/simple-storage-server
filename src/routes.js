@@ -42,7 +42,7 @@ export default ({
   })
 
   routes.put('/update/:_id', function (req, res) {
-    File.find(req.params)
+    File.findOne(req.params)
       .then(function (allData) {
         if (allData == null) return res.send('invalid id');
         let files = allData.files;
