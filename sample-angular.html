@@ -1,0 +1,29 @@
+<html ng-app="myApp">
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.1/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.1/angular-resource.min.js"></script>
+    <script src="angular-file.js"></script>
+    <script>
+        var app = angular.module('myApp', ['ur.file', 'ngResource']);
+
+        app.controller('FileController', function($scope, $resource) {
+
+            var Files = $resource('/files/:id', { id: "@id" });
+
+            angular.extend($scope, {
+
+                model: { file: null },
+
+                upload: function(model) {
+                    Files.prototype.$save.call(model.file, function(self, headers) {
+                        // Handle server response
+                    });
+                }
+            });
+        });
+    </script>
+</head>
+<body ng-controller="FileController">
+    <input type="file" ng-model="model.file" change="upload(model)" />
+</body>
+</html>

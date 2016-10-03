@@ -114,6 +114,24 @@ export default ({
     createThumbnail(req.files);
   });
 
+  routes.post('/uploadSingle', upload.single('file'), function (req, res, next) {
+    let files = [];
+    files.push(req.file);
+
+    //save to db
+    File.create({ files: req.file.filename })
+      .then(function (successUpload) {
+        res.send(successUpload);
+      })
+      .catch(function (failedUpload) {
+        res.send(failedUpload);
+      })
+
+    //jpegtran
+    optimizing(files);
+    createThumbnail(files);
+  });
+
   routes.delete('/album/:_id', function (req, res, next) {
     File.findOne(req.params)
       .then(function (data) {
